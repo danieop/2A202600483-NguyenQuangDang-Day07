@@ -122,7 +122,8 @@ Tài liệu spec + warranty có cấu trúc khác nhau, recursive giúp giữ co
 | Nguyễn Minh Hiếu | FixedSizeChunker (500/50) | 4/5 | Top-1 đúng ở 4/5 query, ổn định trên cả bảng spec lẫn warranty VI | Query 5 (cross-doc, cần filter) fail — mọi strategy đều fail vì top-3 bị VF9 US warranty chiếm |
 | Nguyễn Quang Đăng | Recursive + metadata filter | 3/5 | Tot cho query warranty/filter theo model | Chua on dinh voi query spec va battery-warranty cross-doc |
 | Nguyễn Việt Long | Fixed-size + metadata filter | 4/5 | Tot hon o query spec va cac query warranty ro keyword | Query battery warranty cross-doc van kho |
-|Hà Huy Hoàng|Semantic Chunker + Hybrid Search (Vector + BM25)|4/5|Khắc phục được phần lớn lỗi ở Query 5 (cross-doc) nhờ cụm từ khóa (BM25) và ngữ nghĩa (Vector) bổ trợ nhau. Tránh được nhiễu từ tài liệu VF9 US.|Thời gian indexing chậm và tốn tài nguyên tính toán hơn. Chunk size động đôi khi làm trượt Top-1 ở các query hỏi về thông số spec quá ngắn gọn|
+| Hà Huy Hoàng | Semantic Chunker + Hybrid Search (Vector + BM25) | 4/5 | Khắc phục được phần lớn lỗi ở Query 5 (cross-doc) nhờ cụm từ khóa (BM25) và ngữ nghĩa (Vector) bổ trợ nhau. Tránh được nhiễu từ tài liệu VF9 US. | Thời gian indexing chậm và tốn tài nguyên tính toán hơn. Chunk size động đôi khi làm trượt Top-1 ở các query hỏi về thông số spec quá ngắn gọn |
+| Tống Tiến Mạnh| RecursiveChunker tùy chỉnh (chunk_size=500, overlap=100) | 4/5 | Giữ cấu trúc section markdown, chunk bao trọn điều khoản | Chunk đôi khi vẫn dài nếu section liên tục >500 ký tự |
 
 **Strategy nào tốt nhất cho domain này? Tại sao?**  
 Recursive + metadata filter vẫn là hướng đúng, nhưng cần bổ sung metadata chi tiết hơn và tuning chunk-size cho query spec để cải thiện độ phủ top-3.
