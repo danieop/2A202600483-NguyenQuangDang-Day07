@@ -63,7 +63,9 @@ PY
 
 ```bash
 pip install openai
-export OPENAI_API_KEY=your-key-here
+export SHOPAIKEY_API_KEY=your-key-here
+export OPENAI_BASE_URL=https://api.shopaikey.com/v1
+export OPENAI_USER_AGENT="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
 python3 - <<'PY'
 from src import OpenAIEmbedder
 embedder = OpenAIEmbedder()
@@ -72,10 +74,12 @@ print(len(embedder("embedding smoke test")))
 PY
 ```
 
-- Model mặc định cho lựa chọn này là `text-embedding-3-small`
+- Model embedding mặc định cho lựa chọn này là `text-embedding-3-small`
+- Model chat mặc định cho agent là `gpt-4o-mini`
 - Có thể đổi model bằng:
 ```bash
 export OPENAI_EMBEDDING_MODEL=text-embedding-3-small
+export OPENAI_CHAT_MODEL=gpt-4o-mini
 ```
 
 ### Quy tắc fallback
@@ -100,21 +104,23 @@ print(embedder._backend_name, len(embedder("embedding smoke test")))
 PY
 ```
 
-**Verify OpenAI embedder**
+**Verify OpenAI embedder + chat model**
 
 ```bash
 python3 - <<'PY'
 from pathlib import Path
 from dotenv import load_dotenv
-from src import OpenAIEmbedder
+from src import OpenAIChatLLM, OpenAIEmbedder
 
 load_dotenv(dotenv_path=Path(".env"), override=False)
 embedder = OpenAIEmbedder()
+chat = OpenAIChatLLM()
 print(embedder._backend_name, len(embedder("embedding smoke test")))
+print(chat._backend_name)
 PY
 ```
 
-> Lưu ý: `OpenAIEmbedder` cần `OPENAI_API_KEY` hợp lệ trong môi trường hoặc `.env`.
+> Lưu ý: `OpenAIEmbedder` và `OpenAIChatLLM` cần `SHOPAIKEY_API_KEY` hợp lệ trong môi trường hoặc `.env`.
 
 ---
 
