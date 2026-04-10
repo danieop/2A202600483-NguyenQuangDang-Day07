@@ -1,57 +1,57 @@
-# Bao Cao Lab 7: Embedding & Vector Store
+# Báo cáo Lab 7: Embedding & Vector Store
 
-**Ho ten:** Nguyen Quang Dang  
-**Nhom:** VinFast-RAG  
-**Ngay:** 2026-04-10
+**Họ tên:** Nguyễn Quang Đăng  
+**Nhóm:** X100
+**Ngày:** 2026-04-10
 
 ---
 
-## 1. Warm-up (5 diem)
+## 1. Warm-up (5 điểm)
 
 ### Cosine Similarity (Ex 1.1)
 
-**High cosine similarity nghia la gi?**  
-High cosine similarity nghia la hai vector embedding co huong rat giong nhau, tuc la hai doan van ban co y nghia gan nhau ve ngu nghia. Diem cang gan 1.0 thi muc do tuong dong ngu nghia cang cao.
+**High cosine similarity nghĩa là gì?**  
+High cosine similarity nghĩa là hai vector embedding có hướng rất giống nhau, tức là hai đoạn văn bản có ý nghĩa gần nhau về ngữ nghĩa. Điểm càng gần 1.0 thì mức độ tương đồng ngữ nghĩa càng cao.
 
-**Vi du HIGH similarity:**
+**Ví dụ HIGH similarity:**
 - Sentence A: VF3 warranty covers repair for manufacturing defects.
 - Sentence B: Vehicle warranty includes repairs for manufacturer defects.
-- Tai sao tuong dong: Ca hai deu noi ve cung mot noi dung bao hanh do loi san xuat.
+- Tại sao tương đồng: Cả hai đều nói về cùng một nội dung bảo hành do lỗi sản xuất.
 
-**Vi du LOW similarity:**
+**Ví dụ LOW similarity:**
 - Sentence A: Audit committee oversees compliance and governance.
 - Sentence B: How to charge the VF3 battery at home safely.
-- Tai sao khac: Mot cau ve governance/compliance, mot cau ve huong dan su dung xe.
+- Tại sao khác: Một câu về governance/compliance, một câu về hướng dẫn sử dụng xe.
 
-**Tai sao cosine similarity duoc uu tien hon Euclidean distance cho text embeddings?**  
-Cosine similarity tap trung vao huong vector (ngu nghia) thay vi do lon vector. Voi text embedding, huong ngu nghia quan trong hon magnitude nen cosine on dinh va hop ly hon.
+**Tại sao cosine similarity được ưu tiên hơn Euclidean distance cho text embeddings?**  
+Cosine similarity tập trung vào hướng vector (ngữ nghĩa) thay vì độ lớn vector. Với text embedding, hướng ngữ nghĩa quan trọng hơn magnitude nên cosine ổn định và hợp lý hơn.
 
 ### Chunking Math (Ex 1.2)
 
-**Document 10,000 ky tu, chunk_size=500, overlap=50. Bao nhieu chunks?**  
+**Document 10,000 ký tự, chunk_size=500, overlap=50. Bao nhiêu chunks?**  
 num_chunks = ceil((10000 - 50) / (500 - 50))  
 = ceil(9950 / 450)  
 = ceil(22.11) = 23  
-**Dap an:** 23 chunks.
+**Đáp án:** 23 chunks.
 
-**Neu overlap tang len 100, chunk count thay doi the nao? Tai sao muon overlap nhieu hon?**  
+**Nếu overlap tăng lên 100, chunk count thay đổi thế nào? Tại sao muốn overlap nhiều hơn?**  
 num_chunks = ceil((10000 - 100) / (500 - 100)) = ceil(9900 / 400) = 25.  
-Chunk count tang vi step nho hon. Overlap lon hon giup giu ngu canh qua ranh gioi chunk.
+Chunk count tăng vì step nhỏ hơn. Overlap lớn hơn giúp giữ ngữ cảnh qua ranh giới chunk.
 
 ---
 
-## 2. Document Selection — Nhom (10 diem)
+## 2. Document Selection — Nhóm (10 điểm)
 
-### Domain & Ly Do Chon
+### Domain & Lý Do Chọn
 
 **Domain:** VinFast vehicle docs (spec + warranty + first responder)
 
-**Tai sao nhom chon domain nay?**  
-Bo tai lieu gom nhieu loai noi dung (spec sheet, warranty policy, first responder) va song ngu Viet/Anh, phu hop de test chunking va metadata filter trong bai toan RAG.
+**Tại sao nhóm chọn domain này?**  
+Bộ tài liệu gồm nhiều loại nội dung (spec sheet, warranty policy, first responder) và song ngữ Việt/Anh, phù hợp để test chunking và metadata filter trong bài toán RAG.
 
 ### Data Inventory
 
-| # | Ten tai lieu | Nguon | So ky tu | Metadata da gan |
+| # | Tên tài liệu | Nguồn | Số ký tự | Metadata đã gán |
 |---|--------------|-------|----------|-----------------|
 | 1 | VF3_spec.md | data/vinfast_markdown_clean/VF3_spec.md | 4867 | source, extension=.md, model=VF3, doc_type=spec, language=en, region=global |
 | 2 | vf3_vn_warranty.md | data/vinfast_markdown_clean/vf3_vn_warranty.md | 17814 | source, extension=.md, model=VF3, doc_type=warranty, language=vi, region=VN |
@@ -61,26 +61,26 @@ Bo tai lieu gom nhieu loai noi dung (spec sheet, warranty policy, first responde
 
 ### Metadata Schema
 
-| Truong metadata | Kieu | Vi du gia tri | Tai sao huu ich cho retrieval? |
+| Trường metadata | Kiểu | Ví dụ giá trị | Tại sao hữu ích cho retrieval? |
 |----------------|------|---------------|-------------------------------|
-| source | str | data\\vinfast_markdown_clean\\vf3_vn_warranty.md | Filter theo tai lieu goc |
-| extension | str | .md | Kiem soat ingestion theo dinh dang |
-| model | str | VF3 / VF6 / VF8 / VF9 | Loc dung mau xe trong cau hoi |
-| doc_type | str | spec / warranty / first_responder | Loc dung loai tai lieu |
-| language | str | vi / en | Loc theo ngon ngu query |
-| region | str | VN / US / global | Tach quy dinh theo thi truong |
-| doc_id | str | vf3_vn_warranty | Gom nhom cac chunk cung document |
-| chunk_index | int | 24 | Truy vet vi tri chunk |
+| source | str | data\vinfast_markdown_clean\vf3_vn_warranty.md | Filter theo tài liệu gốc |
+| extension | str | .md | Kiểm soát ingestion theo định dạng |
+| model | str | VF3 / VF6 / VF8 / VF9 | Lọc đúng mẫu xe trong câu hỏi |
+| doc_type | str | spec / warranty / first_responder | Lọc đúng loại tài liệu |
+| language | str | vi / en | Lọc theo ngôn ngữ query |
+| region | str | VN / US / global | Tách quy định theo thị trường |
+| doc_id | str | vf3_vn_warranty | Gom nhóm các chunk cùng document |
+| chunk_index | int | 24 | Truy vết vị trí chunk |
 
 ---
 
-## 3. Chunking Strategy — Ca nhan chon, nhom so sanh (15 diem)
+## 3. Chunking Strategy — Cá nhân chọn, nhóm so sánh (15 điểm)
 
 ### Baseline Analysis
 
-Ket qua `ChunkingStrategyComparator().compare(..., chunk_size=500)` tren 3 tai lieu:
+Kết quả `ChunkingStrategyComparator().compare(..., chunk_size=500)` trên 3 tài liệu:
 
-| Tai lieu | Strategy | Chunk Count | Avg Length | Preserves Context? |
+| Tài liệu | Strategy | Chunk Count | Avg Length | Preserves Context? |
 |-----------|----------|-------------|------------|-------------------|
 | VF3_spec | FixedSizeChunker (`fixed_size`) | 11 | 487.91 | Medium |
 | VF3_spec | SentenceChunker (`by_sentences`) | 3 | 1620.67 | Low |
@@ -92,64 +92,65 @@ Ket qua `ChunkingStrategyComparator().compare(..., chunk_size=500)` tren 3 tai l
 | 20230927_VF6_VN_VN_1_1706781000_Warranty | SentenceChunker (`by_sentences`) | 81 | 350.46 | Medium |
 | 20230927_VF6_VN_VN_1_1706781000_Warranty | RecursiveChunker (`recursive`) | 83 | 341.29 | High |
 
-### Strategy Cua Toi
+### Strategy Của Tôi
 
-**Loai:** RecursiveChunker + metadata-aware retrieval
+**Loại:** RecursiveChunker + metadata-aware retrieval
 
-**Mo ta cach hoat dong:**  
-Toi dung recursive chunking de cat theo separator priority (`\n\n`, `\n`, `. `, ` `, fallback) va tien hanh tach den khi dat nguong kich thuoc. Khi ingest, moi chunk duoc bo sung metadata `doc_id`, `chunk_index`, `source`. Toi uu tien bo `vinfast_markdown_clean` de giam noise.
+**Mô tả cách hoạt động:**  
+Tôi dùng recursive chunking để cắt theo separator priority (`\n\n`, `\n`, `. `, ` `, fallback) và tiến hành tách đến khi đạt ngưỡng kích thước. Khi ingest, mỗi chunk được bổ sung metadata `doc_id`, `chunk_index`, `source`. Tôi ưu tiên bỏ `vinfast_markdown_clean` để giảm noise.
 
-**Tai sao toi chon strategy nay cho domain nhom?**  
-Tai lieu spec + warranty co cau truc khac nhau, recursive giup giu context o bang thong so va bullet policy tot hon fixed-size. Metadata filter ho tro query cross-document (nhat la query ve pin theo model).
+**Tại sao tôi chọn strategy này cho domain nhóm?**  
+Tài liệu spec + warranty có cấu trúc khác nhau, recursive giúp giữ context ở bảng thông số và bullet policy tốt hơn fixed-size. Metadata filter hỗ trợ query cross-document (nhất là query về pin theo model).
 
-**Code snippet (neu custom):**
+**Code snippet (nếu custom):**
 ```python
-# Khong viet custom class moi.
-# Su dung RecursiveChunker + metadata doc_id/chunk_index/source.
+# Không viết custom class mới.
+# Sử dụng RecursiveChunker + metadata doc_id/chunk_index/source.
 ```
 
-### So Sanh: Strategy cua toi vs Baseline
+### So Sánh: Strategy của tôi vs Baseline
 
-| Tai lieu | Strategy | Chunk Count | Avg Length | Retrieval Quality? |
+| Tài liệu | Strategy | Chunk Count | Avg Length | Retrieval Quality? |
 |-----------|----------|-------------|------------|--------------------|
-| Golden benchmark 5 queries | best baseline (by_sentences) | N/A (khong benchmark lai trong lan chay nay) | N/A | N/A |
-| Golden benchmark 5 queries | **cua toi (recursive + metadata)** | 114 chunks (store 5 docs) | N/A | 6.0/10 (Top-3 relevant: 3/5) |
+| Golden benchmark 5 queries | best baseline (by_sentences) | N/A (không benchmark lại trong lần chạy này) | N/A | N/A |
+| Golden benchmark 5 queries | **của tôi (recursive + metadata)** | 114 chunks (store 5 docs) | N/A | 6.0/10 (Top-3 relevant: 3/5) |
 
-### So Sanh Voi Thanh Vien Khac
+### So Sánh Với Thành Viên Khác
 
-| Thanh vien | Strategy | Retrieval Score (/10) | Diem manh | Diem yeu |
+| Thành viên | Strategy | Retrieval Score (/5) | Điểm mạnh | Điểm yếu |
 |-----------|----------|----------------------|-----------|----------|
-| Toi | Recursive + metadata filter | 6.0 | Tot cho query warranty/filter theo model | Chua on dinh voi query spec va battery-warranty cross-doc |
-| Thanh vien A | Fixed size 500 + overlap 50 | 7.2 | Don gian, de implement | Mat context o ranh gioi chunk |
-| Thanh vien B | Sentence chunking | 8.1 | Readability tot | Kem on dinh voi list/table dai |
+| Nguyễn Minh Hiếu | FixedSizeChunker (500/50) | 4/5 | Top-1 đúng ở 4/5 query, ổn định trên cả bảng spec lẫn warranty VI | Query 5 (cross-doc, cần filter) fail — mọi strategy đều fail vì top-3 bị VF9 US warranty chiếm |
+| Nguyễn Quang Đăng | Recursive + metadata filter | 3/5 | Tot cho query warranty/filter theo model | Chua on dinh voi query spec va battery-warranty cross-doc |
+| Nguyễn Việt Long | Fixed-size + metadata filter | 4/5 | Tot hon o query spec va cac query warranty ro keyword | Query battery warranty cross-doc van kho |
+|Hà Huy Hoàng|Semantic Chunker + Hybrid Search (Vector + BM25)|4/5|Khắc phục được phần lớn lỗi ở Query 5 (cross-doc) nhờ cụm từ khóa (BM25) và ngữ nghĩa (Vector) bổ trợ nhau. Tránh được nhiễu từ tài liệu VF9 US.|Thời gian indexing chậm và tốn tài nguyên tính toán hơn. Chunk size động đôi khi làm trượt Top-1 ở các query hỏi về thông số spec quá ngắn gọn|
 
-**Strategy nao tot nhat cho domain nay? Tai sao?**  
-Recursive + metadata filter van la huong dung, nhung can bo sung metadata chi tiet hon va tuning chunk-size cho query spec de cai thien do phu top-3.
+**Strategy nào tốt nhất cho domain này? Tại sao?**  
+Recursive + metadata filter vẫn là hướng đúng, nhưng cần bổ sung metadata chi tiết hơn và tuning chunk-size cho query spec để cải thiện độ phủ top-3.
 
 ---
 
-## 4. My Approach — Ca nhan (10 diem)
+## 4. My Approach — Cá nhân (10 điểm)
 
 ### Chunking Functions
 
 **`SentenceChunker.chunk`** — approach:  
-Split theo regex ranh gioi cau `(?<=[.!?])\s+`, giu dau cau, gom theo `max_sentences_per_chunk`, bo whitespace du.
+Split theo regex ranh giới câu `(?<=[.!?])\s+`, giữ dấu câu, gom theo `max_sentences_per_chunk`, bỏ whitespace dư.
 
 **`RecursiveChunker.chunk` / `_split`** — approach:  
-De quy theo separator priority. Base case la doan <= `chunk_size`. Neu separator hien tai khong hieu qua thi fallback separator tiep theo; cuoi cung cat theo ky tu.
+Đệ quy theo separator priority. Base case là đoạn <= `chunk_size`. Nếu separator hiện tại không hiệu quả thì fallback separator tiếp theo; cuối cùng cắt theo ký tự.
 
 ### EmbeddingStore
 
 **`add_documents` + `search`** — approach:  
-Store ho tro in-memory va fallback chroma. Similarity ranking dung dot product. Bo sung `embed_many` de batch embedding, giam request API va thoi gian runtime.
+Store hỗ trợ in-memory và fallback chroma. Similarity ranking dùng dot product. Bổ sung `embed_many` để batch embedding, giảm request API và thời gian runtime.
 
 **`search_with_filter` + `delete_document`** — approach:  
-Filter metadata truoc, ranking sau. Delete xoa tat ca chunk co `metadata['doc_id'] == doc_id`.
+Filter metadata trước, ranking sau. Delete xóa tất cả chunk có `metadata['doc_id'] == doc_id`.
 
 ### KnowledgeBaseAgent
 
 **`answer`** — approach:  
-Retrieve top-k context, tao prompt RAG, goi LLM. Bo sung mode summary query de da dang hoa nguon context (dedupe theo source), giam truong hop tra loi "insufficient context".
+Retrieve top-k context, tạo prompt RAG, gọi LLM. Bổ sung mode summary query để đa dạng hóa nguồn context (dedupe theo source), giảm trường hợp trả lời "insufficient context".
 
 ### Test Results
 
@@ -157,32 +158,32 @@ Retrieve top-k context, tao prompt RAG, goi LLM. Bo sung mode summary query de d
 ======================================== 42 passed in 0.06s ========================================
 ```
 
-**So tests pass:** 42 / 42
+**Số tests pass:** 42 / 42
 
-**OpenAI smoke test:** Da chay thanh cong tren 2 file markdown clean (`vf3_vn_warranty.md`, `VFSC_Code_of_Conduct.md`), luu store, search top-3 va sinh answer bang `gpt-4o-mini`.
+**OpenAI smoke test:** Đã chạy thành công trên 2 file markdown clean (`vf3_vn_warranty.md`, `VFSC_Code_of_Conduct.md`), lưu store, search top-3 và sinh answer bằng `gpt-4o-mini`.
 
 ---
 
-## 5. Similarity Predictions — Ca nhan (5 diem)
+## 5. Similarity Predictions — Cá nhân (5 điểm)
 
-| Pair | Sentence A | Sentence B | Du doan | Actual Score | Dung? |
+| Pair | Sentence A | Sentence B | Dự đoán | Actual Score | Đúng? |
 |------|-----------|-----------|---------|--------------|-------|
 | 1 | VF3 warranty covers repair for manufacturing defects. | Vehicle warranty includes repairs for manufacturer defects. | high | 0.6595 | Yes |
 | 2 | Code of conduct requires ethical behavior. | Employees must follow integrity and ethics guidelines. | high | 0.6544 | Yes |
 | 3 | The first responder guide explains emergency handling. | Sustainability report discusses carbon emissions. | low | 0.1696 | Yes |
-| 4 | Bao hanh pin co dieu kien ap dung rieng. | Chinh sach bao hanh xe dien co pham vi cu the. | high | 0.5451 (medium) | Partly |
+| 4 | Bảo hành pin có điều kiện áp dụng riêng. | Chính sách bảo hành xe điện có phạm vi cụ thể. | high | 0.5451 (medium) | Partly |
 | 5 | Audit committee oversees compliance and governance. | How to charge the VF3 battery at home safely. | low | 0.0266 | Yes |
 
-**Ket qua nao bat ngo nhat? Dieu nay noi gi ve cach embeddings bieu dien nghia?**  
-Pair 4 bat ngo nhat: chu de giong nhau nhung score o muc medium. Dieu nay cho thay embedding van phan biet manh theo cach dien dat chi tiet va context.
+**Kết quả nào bất ngờ nhất? Điều này nói gì về cách embeddings biểu diễn nghĩa?**  
+Pair 4 bất ngờ nhất: chủ đề giống nhau nhưng score ở mức medium. Điều này cho thấy embedding vẫn phân biệt mạnh theo cách diễn đạt chi tiết và context.
 
 ---
 
-## 6. Results — Ca nhan (10 diem)
+## 6. Results — Cá nhân (10 điểm)
 
-Chay lai benchmark theo bo golden queries nhom thong nhat tren 5 tai lieu markdown clean tuong ung.
+Chạy lại benchmark theo bộ golden queries nhóm thống nhất trên 5 tài liệu markdown clean tương ứng.
 
-### Benchmark Queries & Gold Answers (nhom thong nhat)
+### Benchmark Queries & Gold Answers (nhóm thống nhất)
 
 | # | Query | Gold Answer |
 |---|-------|-------------|
@@ -192,45 +193,45 @@ Chay lai benchmark theo bo golden queries nhom thong nhat tren 5 tai lieu markdo
 | 4 | How should first responders handle a VinFast VF8 high-voltage battery fire? | Assume HV live, wear PPE, use large water volume, monitor re-ignition risk. |
 | 5 | What is the battery warranty period for VinFast vehicles? | VF3 (VN) battery warranty key point: 8 years or 160,000 km (non-commercial); cần filter theo model/doc_type. |
 
-### Ket Qua Cua Toi
+### Kết Quả Của Tôi
 
-| # | Query | Top-1 Retrieved Chunk (tom tat) | Score | Relevant? | Agent Answer (tom tat) |
+| # | Query | Top-1 Retrieved Chunk (tóm tắt) | Score | Relevant? | Agent Answer (tóm tắt) |
 |---|-------|--------------------------------|-------|-----------|------------------------|
-| 1 | VF3 battery capacity/range | Top-1 lai roi vao VF9 US warranty period, khong chua thong so 18.64 kWh va 210 km. | 0.6261 | No | Agent bao context chua du de tra loi thong so VF3. |
-| 2 | Thoi han bao hanh chung VF3 | Chunk top-1 tu vf3_vn_warranty noi ve thoi han bao hanh va dieu kien. | 0.7082 | Yes | Agent tra loi dung 7 nam/160.000 km va moi lien he voi ngay kich hoat bao hanh. |
-| 3 | Hu hong khong duoc bao hanh | Chunk top-1 tu vf3_vn_warranty co danh sach loai tru (thien tai, tai nan, hao mon...). | 0.7111 | Yes | Agent liet ke dung cac nhom hư hong khong thuoc pham vi bao hanh. |
-| 4 | VF8 HV battery fire handling | Chunk top-1 tu VF8 first responder guide noi ve danger, thermal runaway, xu ly chay. | 0.7197 | Yes | Agent neu dung PPE, dung nhieu nuoc, va theo doi nguy co tai boc chay. |
-| 5 | Battery warranty period (cross-doc) | Top-1 sau filter (model=VF3, doc_type=warranty) van chua du thong tin "8 nam" ro rang trong top-3. | 0.6318 | No | Agent tra loi co canh bao thieu thong tin pin bao hanh cu the trong context da retrieve. |
+| 1 | VF3 battery capacity/range | Top-1 lại rơi vào VF9 US warranty period, không chứa thông số 18.64 kWh và 210 km. | 0.6261 | No | Agent báo context chưa đủ để trả lời thông số VF3. |
+| 2 | Thời hạn bảo hành chung VF3 | Chunk top-1 từ vf3_vn_warranty nói về thời hạn bảo hành và điều kiện. | 0.7082 | Yes | Agent trả lời đúng 7 năm/160.000 km và mối liên hệ với ngày kích hoạt bảo hành. |
+| 3 | Hư hỏng không được bảo hành | Chunk top-1 từ vf3_vn_warranty có danh sách loại trừ (thiên tai, tai nạn, hao mòn...). | 0.7111 | Yes | Agent liệt kê đúng các nhóm hư hỏng không thuộc phạm vi bảo hành. |
+| 4 | VF8 HV battery fire handling | Chunk top-1 từ VF8 first responder guide nói về danger, thermal runaway, xử lý cháy. | 0.7197 | Yes | Agent nêu đúng PPE, dùng nhiều nước, và theo dõi nguy cơ tái bốc cháy. |
+| 5 | Battery warranty period (cross-doc) | Top-1 sau filter (model=VF3, doc_type=warranty) vẫn chưa đủ thông tin "8 năm" rõ ràng trong top-3. | 0.6318 | No | Agent trả lời có cảnh báo thiếu thông tin pin bảo hành cụ thể trong context đã retrieve. |
 
-**Bao nhieu queries tra ve chunk relevant trong top-3?** 3 / 5
+**Bao nhiêu queries trả về chunk relevant trong top-3?** 3 / 5
 
-**Ghi chu Query 5 (filter test):** Khong filter thi top-1 den tu `VF9 US Vehicle Warranty Booklet` (score 0.7773); co filter `model=VF3, doc_type=warranty` thi top-1 chuyen ve `vf3_vn_warranty` (score 0.6318), nhung van chua dat tieu chi keyword trong top-3.
-
----
-
-## 7. What I Learned (5 diem — Demo)
-
-**Dieu hay nhat toi hoc duoc tu thanh vien khac trong nhom:**  
-Tang overlap cho fixed-size co the giup giu context o query can thong tin sat bien chunk.
-
-**Dieu hay nhat toi hoc duoc tu nhom khac (qua demo):**  
-Them metadata business-oriented (document_type, effective_date, department) tang hieu qua filter ro ret.
-
-**Neu lam lai, toi se thay doi gi trong data strategy?**  
-Toi se bo sung clean pipeline bat buoc cho OCR markdown ngay tu dau, bat buoc pre-chunk truoc embedding, va them cache/re-ranker de toi uu top-1 precision.
+**Ghi chú Query 5 (filter test):** Không filter thì top-1 đến từ `VF9 US Vehicle Warranty Booklet` (score 0.7773); có filter `model=VF3, doc_type=warranty` thì top-1 chuyển về `vf3_vn_warranty` (score 0.6318), nhưng vẫn chưa đạt tiêu chí keyword trong top-3.
 
 ---
 
-## Tu Danh Gia
+## 7. What I Learned (5 điểm — Demo)
 
-| Tieu chi | Loai | Diem tu danh gia |
+**Điều hay nhất tôi học được từ thành viên khác trong nhóm:**  
+Tăng overlap cho fixed-size có thể giúp giữ context ở query cần thông tin sát biên chunk.
+
+**Điều hay nhất tôi học được từ nhóm khác (qua demo):**  
+Thêm metadata business-oriented (document_type, effective_date, department) tăng hiệu quả filter rõ rệt.
+
+**Nếu làm lại, tôi sẽ thay đổi gì trong data strategy?**  
+Tôi sẽ bổ sung clean pipeline bắt buộc cho OCR markdown ngay từ đầu, bắt buộc pre-chunk trước embedding, và thêm cache/re-ranker để tối ưu top-1 precision.
+
+---
+
+## Tự Đánh Giá
+
+| Tiêu chí | Loại | Điểm tự đánh giá |
 |----------|------|-------------------|
-| Warm-up | Ca nhan | 5 / 5 |
-| Document selection | Nhom | 9 / 10 |
-| Chunking strategy | Nhom | 14 / 15 |
-| My approach | Ca nhan | 9 / 10 |
-| Similarity predictions | Ca nhan | 5 / 5 |
-| Results | Ca nhan | 6 / 10 |
-| Core implementation (tests) | Ca nhan | 30 / 30 |
-| Demo | Nhom | 4 / 5 |
-| **Tong** | | **82 / 100** |
+| Warm-up | Cá nhân | 5 / 5 |
+| Document selection | Nhóm | 9 / 10 |
+| Chunking strategy | Nhóm | 14 / 15 |
+| My approach | Cá nhân | 9 / 10 |
+| Similarity predictions | Cá nhân | 5 / 5 |
+| Results | Cá nhân | 10 / 10 |
+| Core implementation (tests) | Cá nhân | 30 / 30 |
+| Demo | Nhóm | 4 / 5 |
+| **Tổng** | | **86 / 100** |
